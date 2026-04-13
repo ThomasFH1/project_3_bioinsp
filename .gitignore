@@ -5,7 +5,8 @@ Manifest.toml
 *.jl.mem
 
 # Data
-data/
+data/*
+!data/.gitkeep
 
 # Environment
 .venv/
