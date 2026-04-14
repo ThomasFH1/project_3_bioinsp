@@ -1,6 +1,6 @@
 module Project3Bioinsp
 
-export load_landscape, apply_penalty
+export Landscape, load_landscape, apply_penalty, local_optima_mask
 export triangle_fitness
 export run_sga, run_nsga2, run_pso
 export visualize_landscape
