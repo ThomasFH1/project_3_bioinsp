@@ -1,4 +1,4 @@
-#=
+
 using Statistics
  
 # Sigmoid helper function. Converts any number into a value between 0 and 1.
