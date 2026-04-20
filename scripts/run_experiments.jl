@@ -64,6 +64,18 @@ function main(args::Vector{String})
     print_pareto_summary(pareto_individuals, pareto_objectives)
     println("Final generation front size: $(last(front_size_history))")
     println("Final generation entropy: $(last(nsga_entropy_history))")
+
+    best_pso, best_pso_fit, pso_max, pso_mean, pso_min, pso_entropy =
+    run_pso(landscape; swarm_size=50, iterations=500)
+
+    println()
+    println("PSO")
+    println("Best fitness: $(best_pso_fit)")
+    println("Best individual: $(best_pso)")
+    println("Final generation max: $(last(pso_max))")
+    println("Final generation mean: $(last(pso_mean))")
+    println("Final generation min: $(last(pso_min))")
+    println("Final generation entropy: $(last(pso_entropy))")
 end
 
 main(ARGS)
