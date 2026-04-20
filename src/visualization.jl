@@ -3,7 +3,7 @@ using Plots
 function visualize_landscape(landscape::Landscape; highlight_optima::Bool=true)
     indices = collect(1:length(landscape.values))
     x = count_ones.(indices)
-    y = landscape.values
+    y = [fitness(index_to_bitstring(index, landscape.n_features), landscape) for index in indices]
 
     plt = scatter(
         x,
