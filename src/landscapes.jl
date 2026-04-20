@@ -5,6 +5,7 @@ struct Landscape
     values::Vector{Float64}
     n_features::Int
     name::String
+    penalty_weight::Float64
 end
 
 function infer_n_features(n_rows::Int)
@@ -19,7 +20,7 @@ function bitstring_to_index(individual::AbstractVector{Bool})
     return sum(individual[i] * 2^(i - 1) for i in eachindex(individual))
 end
 
-function fitness(individual::AbstractVector{Bool}, landscape::Landscape)
+function fitness(individual::AbstractVector{Bool}, landscape::Landscape; penalized::Bool=true)
     if length(individual) != landscape.n_features
         error("Expected bitstring of length $(landscape.n_features), got $(length(individual)).")
     end
@@ -29,7 +30,16 @@ function fitness(individual::AbstractVector{Bool}, landscape::Landscape)
         return -Inf
     end
 
-    return landscape.values[index]
+    value = landscape.values[index]
+    if penalized
+        return apply_penalty(value, count(individual), landscape.penalty_weight)
+    end
+
+    return value
+end
+
+function accuracy(individual::AbstractVector{Bool}, landscape::Landscape)
+    return fitness(individual, landscape; penalized=false)
 end
 
 function population_entropy(pop)
@@ -46,21 +56,15 @@ function population_entropy(pop)
 end
 
 function load_landscape(filepath::String; ε::Float64=0.1, name::String=splitext(basename(filepath))[1])
-    accuracies = h5open(filepath, "r") do file
+    accuracy_samples = h5open(filepath, "r") do file
         read(file["accuracies"])
     end
 
-    mean_accuracies = vec(Float64.(mean(accuracies, dims=2)))
+    mean_accuracies = vec(Float64.(mean(accuracy_samples, dims=2)))
     n_rows = length(mean_accuracies)
     n_features = infer_n_features(n_rows)
 
-    values = Vector{Float64}(undef, n_rows)
-    for index in 1:n_rows
-        n_active = count_ones(index)
-        values[index] = apply_penalty(mean_accuracies[index], n_active, ε)
-    end
-
-    return Landscape(values, n_features, name)
+    return Landscape(mean_accuracies, n_features, name, ε)
 end
 
 function apply_penalty(accuracy::Float64, n_features::Int, ε::Float64)
@@ -81,7 +85,7 @@ function local_optima_mask(landscape::Landscape)
 
     for index in 1:n_values
         bits = index_to_bitstring(index, landscape.n_features)
-        current_fitness = landscape.values[index]
+        current_fitness = fitness(bits, landscape)
         is_optimum = true
 
         for bit in 1:landscape.n_features

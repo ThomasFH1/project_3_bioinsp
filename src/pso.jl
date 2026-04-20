@@ -1,3 +1,4 @@
+#=
 using Statistics
  
 # Sigmoid helper function. Converts any number into a value between 0 and 1.
@@ -75,4 +76,3 @@ function run_pso(landscape;
  
     return global_best_pos, global_best_fit, max_history, mean_history, min_history, entropy_history
 end
- 
