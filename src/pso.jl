@@ -1,3 +1,4 @@
+#=
 using Statistics
 
 # Sigmoid helper function. This converts any number into a value between 0 and 1. We use it to turn velocity into a probability. 
@@ -72,3 +73,4 @@ function run_pso(landscape; swarm_size::Int=50, iterations::Int=500
  
     return global_best_pos, global_best_fit, max_history, mean_history, min_history, entropy_history
 end
+=#

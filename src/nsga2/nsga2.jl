@@ -8,17 +8,25 @@ function run_nsga2(landscape::Landscape;
 
     for _ in 1:generations
         objectives = [nsga2_objectives(ind, landscape) for ind in population]
-        push!(front_size_history, length(pareto_front_indices(objectives)))
+        push!(front_size_history, length(first(non_dominated_fronts(objectives))))
         push!(entropy_history, population_entropy(population))
 
-        offspring = make_offspring(population; pop_size, mutation_rate)
+        ranks, crowding = rank_and_crowding(objectives)
+        offspring = make_offspring(
+            population;
+            pop_size=pop_size,
+            mutation_rate=mutation_rate,
+            ranks=ranks,
+            crowding=crowding,
+        )
+
         combined_population = vcat(population, offspring)
         combined_objectives = [nsga2_objectives(ind, landscape) for ind in combined_population]
         population = select_survivors(combined_population, combined_objectives, pop_size)
     end
 
     objectives = [nsga2_objectives(ind, landscape) for ind in population]
-    pareto_front = pareto_front_indices(objectives)
+    pareto_front = first(non_dominated_fronts(objectives))
 
     return copy.(population[pareto_front]),
            objectives[pareto_front],

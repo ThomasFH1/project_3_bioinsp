@@ -12,61 +12,90 @@ function dominates(a, b)
            any(a[i] > b[i] for i in eachindex(a))
 end
 
-function pareto_front_indices(objectives)
-    front = Int[]
+function non_dominated_fronts(objectives)
+    remaining = collect(eachindex(objectives))
+    fronts = Vector{Vector{Int}}()
 
-    for candidate in eachindex(objectives)
-        is_dominated = false
+    while !isempty(remaining)
+        front = Int[]
 
-        for other in eachindex(objectives)
-            if other == candidate
-                continue
+        for candidate in remaining
+            is_dominated = false
+
+            for other in remaining
+                if other == candidate
+                    continue
+                end
+
+                if dominates(objectives[other], objectives[candidate])
+                    is_dominated = true
+                    break
+                end
             end
 
-            if dominates(objectives[other], objectives[candidate])
-                is_dominated = true
-                break
+            if !is_dominated
+                push!(front, candidate)
             end
         end
 
-        if !is_dominated
-            push!(front, candidate)
-        end
+        push!(fronts, front)
+        remaining = setdiff(remaining, front)
     end
 
-    return front
+    return fronts
 end
 
 function crowding_scores(front, objectives)
-    # TODO: replace with standard NSGA-II crowding distance over both objectives.
-    return Dict(i => 0.0 for i in front)
+    scores = Dict(i => 0.0 for i in front)
+
+    if length(front) <= 2
+        for i in front
+            scores[i] = Inf
+        end
+        return scores
+    end
+
+    n_objectives = length(objectives[first(front)])
+
+    for objective_index in 1:n_objectives
+        sorted_front = sort(front; by=i -> objectives[i][objective_index])
+
+        scores[first(sorted_front)] = Inf
+        scores[last(sorted_front)] = Inf
+
+        min_value = objectives[first(sorted_front)][objective_index]
+        max_value = objectives[last(sorted_front)][objective_index]
+        value_range = max_value - min_value
+
+        if value_range == 0 || !isfinite(value_range)
+            continue
+        end
+
+        for position in 2:(length(sorted_front) - 1)
+            previous = sorted_front[position - 1]
+            current = sorted_front[position]
+            next = sorted_front[position + 1]
+
+            scores[current] +=
+                (objectives[next][objective_index] -
+                 objectives[previous][objective_index]) / value_range
+        end
+    end
+
+    return scores
 end
 
-function make_offspring(population; pop_size::Int, mutation_rate::Float64)
+function make_offspring(population; pop_size::Int, mutation_rate::Float64, ranks, crowding)
     recombinator = EvoLP.TwoPointRecombinator()
     mutator = EvoLP.BitwiseMutator(mutation_rate)
     offspring = BitVector[]
 
     while length(offspring) < pop_size
-        p1, p2 = rand(1:length(population), 2)
+        p1 = crowded_tournament(ranks, crowding)
+        p2 = crowded_tournament(ranks, crowding)
         child = EvoLP.cross(recombinator, population[p1], population[p2])
         push!(offspring, mutate(mutator, child))
     end
 
     return offspring
-end
-
-function select_survivors(population, objectives, pop_size::Int)
-    # TODO: full NSGA-II should add fronts in rank order, then use crowding
-    # distance only when the next front does not fit.
-    front = pareto_front_indices(objectives)
-    crowding = crowding_scores(front, objectives)
-    selected = sort(front; by=i -> crowding[i], rev=true)
-
-    if length(selected) < pop_size
-        remaining = setdiff(collect(eachindex(population)), selected)
-        append!(selected, remaining[1:(pop_size - length(selected))])
-    end
-
-    return copy.(population[selected[1:pop_size]])
 end
