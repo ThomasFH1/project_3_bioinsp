@@ -4,6 +4,7 @@ export Landscape, load_landscape, apply_penalty, local_optima_mask, accuracy
 export triangle_fitness
 export run_sga, run_nsga2, run_pso
 export visualize_landscape
+export index_to_bitstring
 
 include("landscapes.jl")
 include("triangle.jl")
