@@ -7,6 +7,56 @@ function nsga2_objectives(individual::AbstractVector{Bool}, landscape::Landscape
     return (fitness(individual, landscape; penalized=false), -Float64(count(individual)))
 end
 
+function individual_key(individual::AbstractVector{Bool})
+    return Tuple(individual)
+end
+
+function deduplicate_individuals(population)
+    seen = Set{Tuple{Vararg{Bool}}}()
+    unique_population = BitVector[]
+
+    for individual in population
+        key = individual_key(individual)
+        if key in seen
+            continue
+        end
+
+        push!(seen, key)
+        push!(unique_population, copy(individual))
+    end
+
+    return unique_population, seen
+end
+
+function random_valid_individual(n_features::Int)
+    individual = BitVector(rand(Bool, n_features))
+
+    while !any(individual)
+        individual = BitVector(rand(Bool, n_features))
+    end
+
+    return individual
+end
+
+function deduplicate_and_refill(population, pop_size::Int, n_features::Int)
+    unique_population, seen = deduplicate_individuals(population)
+    max_unique = 2^n_features - 1
+
+    while length(unique_population) < pop_size && length(seen) < max_unique
+        candidate = random_valid_individual(n_features)
+        key = individual_key(candidate)
+
+        if key in seen
+            continue
+        end
+
+        push!(seen, key)
+        push!(unique_population, candidate)
+    end
+
+    return unique_population
+end
+
 function dominates(a, b)
     return all(a[i] >= b[i] for i in eachindex(a)) &&
            any(a[i] > b[i] for i in eachindex(a))
