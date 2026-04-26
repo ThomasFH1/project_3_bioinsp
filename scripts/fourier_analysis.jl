@@ -149,7 +149,7 @@ end
 
 function plot_main_effects(output_path::String, landscape_name::String, objective_name::String, coefficients)
     effects = feature_main_effects(coefficients)
-    order = sortperm(abs.(effects), rev=true)
+    order = collect(eachindex(effects))
     labels = ["F$(feature)" for feature in order]
     positions = collect(eachindex(labels))
 
@@ -160,7 +160,10 @@ function plot_main_effects(output_path::String, landscape_name::String, objectiv
         ylabel="Mean selected - mean absent",
         title="$(landscape_name) - $(objective_name)",
         label=false,
-        color=:seagreen,
+        color=:navy,
+        linecolor=:match,
+        linewidth=0,
+        bar_width=0.4,
         xticks=(positions, labels),
         xrotation=60,
         tickfontsize=8,
