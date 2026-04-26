@@ -8,9 +8,12 @@ export local_optima_indices, local_optima_weights
 export plot_feature_landscape_map, plot_weight_landscape_map, plot_weight_lookup, plot_weight_path
 export path_rows, save_path_table
 export index_to_bitstring
+export full_landscape_values, fourier_coefficients, spectral_energy_by_order
+export feature_main_effects, pair_interaction_effects, mask_features
 
 include("landscapes.jl")
 include("triangle.jl")
+include("fourier.jl")
 include("sga.jl")
 include("nsga2/helpers.jl")
 include("nsga2/selectors.jl")
