@@ -11,7 +11,8 @@ function run_pso(landscape;
                  w::Float64=0.7,        # inertia: how much old velocity is kept
                  c1::Float64=1.5,       # cognitive: pull toward personal best
                  c2::Float64=1.5,       # social: pull toward global best
-                 v_max::Float64=4.0)    # clamp velocity so sigmoid stays meaningful
+                 v_max::Float64=4.0,    # clamp velocity so sigmoid stays meaningful
+                 trace::Bool=false)
  
     n = landscape.n_features
  
@@ -33,6 +34,7 @@ function run_pso(landscape;
     mean_history    = Float64[]
     min_history     = Float64[]
     entropy_history = Float64[]
+    trace_history   = NamedTuple[]
  
     for iter in 1:iterations
         fits = [fitness(positions[i], landscape) for i in 1:swarm_size]
@@ -72,7 +74,22 @@ function run_pso(landscape;
                 global_best_pos = copy(personal_best_pos[i])
             end
         end
+
+        if trace
+            push!(
+                trace_history,
+                (
+                    iteration=iter,
+                    global_best=copy(global_best_pos),
+                    global_best_fitness=global_best_fit,
+                ),
+            )
+        end
     end
- 
+
+    if trace
+        return global_best_pos, global_best_fit, max_history, mean_history, min_history, entropy_history, trace_history
+    end
+
     return global_best_pos, global_best_fit, max_history, mean_history, min_history, entropy_history
 end

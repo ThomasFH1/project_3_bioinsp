@@ -79,7 +79,7 @@ function index_to_bitstring(index::Int, n_features::Int)
     return bits
 end
 
-function local_optima_mask(landscape::Landscape)
+function local_optima_mask(landscape::Landscape; strict::Bool=true)
     n_values = length(landscape.values)
     mask = falses(n_values)
 
@@ -93,7 +93,7 @@ function local_optima_mask(landscape::Landscape)
             neighbor[bit] = !neighbor[bit]
             neighbor_fitness = fitness(neighbor, landscape)
 
-            if neighbor_fitness > current_fitness
+            if strict ? neighbor_fitness >= current_fitness : neighbor_fitness > current_fitness
                 is_optimum = false
                 break
             end

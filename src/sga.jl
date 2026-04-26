@@ -1,10 +1,11 @@
 using EvoLP
 using Statistics
 
-function run_sga(landscape::Landscape;
+function run_sga(landscape;
                  pop_size=100, generations=500,
                  mutation_rate=0.01, tournament_size=3,
-                 num_elite=nothing)
+                 num_elite=nothing,
+                 trace::Bool=false)
     n_features = landscape.n_features
 
     if num_elite === nothing
@@ -23,6 +24,7 @@ function run_sga(landscape::Landscape;
     mean_history = Float64[]
     min_history = Float64[]
     entropy_history = Float64[]
+    trace_history = NamedTuple[]
 
     for gen in 1:generations
         population_fitness = [fitness(ind, landscape) for ind in population]
@@ -36,6 +38,19 @@ function run_sga(landscape::Landscape;
         if population_fitness[gen_best] > best_fitness
             best_fitness = population_fitness[gen_best]
             best_individual = copy(population[gen_best])
+        end
+
+        if trace
+            push!(
+                trace_history,
+                (
+                    generation=gen,
+                    generation_best=copy(population[gen_best]),
+                    generation_best_fitness=population_fitness[gen_best],
+                    best_so_far=copy(best_individual),
+                    best_so_far_fitness=best_fitness,
+                ),
+            )
         end
 
         best_indices = sortperm(population_fitness, rev=true)
@@ -56,6 +71,10 @@ function run_sga(landscape::Landscape;
         end
 
         population = new_population
+    end
+
+    if trace
+        return best_individual, best_fitness, max_history, mean_history, min_history, entropy_history, trace_history
     end
 
     return best_individual, best_fitness, max_history, mean_history, min_history, entropy_history
